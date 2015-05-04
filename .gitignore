@@ -1,0 +1,11 @@
+target/
+work/
+*.iml
+*.ipr
+*.iws
+*sublime*
+projectFilesBackup
+.classpath
+.project
+.idea
+web-app/photos
