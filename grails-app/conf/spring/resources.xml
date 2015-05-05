@@ -12,7 +12,9 @@
              http://www.springframework.org/schema/task
              http://www.springframework.org/schema/task/spring-task.xsd
              http://www.springframework.org/schema/integration/file
-             http://www.springframework.org/schema/integration/file/spring-integration-file.xsd">
+             http://www.springframework.org/schema/integration/file/spring-integration-file.xsd
+             http://www.springframework.org/schema/integration/xmpp
+             http://www.springframework.org/schema/integration/xmpp/spring-integration-xmpp.xsd">
 
 
     <task:executor id="executor" pool-size="10"/>
@@ -28,5 +30,34 @@
         <service-activator ref="browserPushService" method="pushToBrowser"/>
         <service-activator ref="fileService" method="deleteTempFiles"/>
     </chain>
+
+    <!-- Xmpp demo -->
+    <xmpp:xmpp-connection
+            id="xmppConnection"
+            user="${geecon.xmpp.user}"
+            password="${geecon.xmpp.password}"
+            host="${geecon.xmpp.host}"
+            port="${geecon.xmpp.port}"
+            service-name="${geecon.xmpp.service}"/>
+
+    <!-- Xmpp: Sent messages to user -->
+    <channel id="sendXmppMessagesChannel"/>
+    <xmpp:outbound-channel-adapter channel="sendXmppMessagesChannel"/>
+
+    <!-- Xmpp: Receive messages from user -->
+    <channel id="receiveXmppMessages"/>
+    <xmpp:inbound-channel-adapter channel="receiveXmppMessages"/>
+
+    <!-- Xmpp: Command messages -->
+    <chain input-channel="receiveXmppMessages">
+        <filter expression="payload.startsWith('command ')" discard-channel="chatMessageReceived"/>
+        <transformer ref="xmppService" method="parseCommand"/>
+        <service-activator ref="xmppService" method="executeCommand"/>
+        <service-activator ref="xmppService" method="sendMessage"/>
+    </chain>
+
+    <!-- Xmpp: Normal messages -->
+    <channel id="chatMessageReceived"/>
+    <service-activator input-channel="chatMessageReceived" ref="xmppService" method="chatMessageReceived"/>
 
 </beans:beans>
